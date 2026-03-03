@@ -1,74 +1,67 @@
-# Hybrid RAG & ReAct Agent System
+# 🧠 Neuromorphic RAG Agent: LangGraph & Hybrid Search Architecture
 
-本项目是一个基于 LangChain 和 Streamlit 构建的**混合检索增强生成与智能体决策系统**。系统融合了经典的检索算法（如 BM25、LinUCB、MMR、PRF）与现代大模型智能体（ReAct Agent）架构，支持自主规划任务并在本地知识库与外部网络搜索之间进行路由调度。
+本项目是一个具有“类脑认知架构”的**高级混合检索与智能体决策系统**。系统摒弃了传统的单链或黑盒调用，采用有向循环图 (Cyclic Graph) 重构了大模型的推理大脑，并深度融合了强化学习与经典信息检索算法。
 
-## ⚙️ 核心技术特性
+系统在工程实现上高度模块化，分为**感知层 (Perception)、记忆层 (Memory)、算法层 (Algorithms) 和 决策网络 (Agent)**，是一个具备极强扩展性的 Search-based LLM 应用范例。
 
-*   **多步推理智能体 (ReAct Agent)**
-    *   基于 `AgentExecutor` 实现，支持大模型通过 Thought-Action-Observation 闭环拆解复杂任务。
-    *   动态工具调用：集成自定义的本地混合检索工具 (`LocalKnowledgeTool`) 与广域网搜索工具 (`DuckDuckGoSearchRun`)。
-*   **自适应混合检索 (Hybrid RAG + LinUCB)**
-    *   **双路召回**: 结合 ChromaDB 稠密向量检索与 BM25 稀疏词频检索。
-    *   **动态权重调节**: 引入基于上下文的 LinUCB 强化学习算法，根据查询特征（长度、特殊字符密度等）在线自适应调整双路召回的 Alpha 权重。
-*   **高阶检索增强策略 (PRF & MMR)**
-    *   **伪相关反馈 (PRF)**: 结合 TF-IDF 算法提取初次召回文档的关键词，实现查询自动发散与扩展 (Query Expansion)。
-    *   **最大边际相关性 (MMR)**: 对召回结果进行多样性重排，降低信息冗余度，提升上下文利用率。
-*   **NLP 辅助处理流水线**
-    *   集成本地 Hugging Face Pipeline，对用户输入进行情感分析 (Sentiment Analysis)，并对大模型输出进行命名实体识别 (NER) 抽提。
-*   **可视化交互面板**
-    *   基于 Streamlit 实现的参数控制台。
-    *   集成 PCA 降维算法，提供本地向量库语义空间 (Semantic Space) 的 2D 散点图可视化。
+## 🌟 核心架构与技术亮点
 
-## 🚀 安装与环境配置
+### 1. 前额叶皮层：基于 LangGraph 的多步决策网络 (Agent)
+* **状态机流转**: 采用 `LangGraph` 替代传统的 `AgentExecutor`，将大模型的 ReAct (Reason+Act) 循环升级为高度透明、可控的状态机架构。
+* **按需搜索路由**: Agent 能够自主判断任务复杂度，在“本地私有知识库 (Local Knowledge)”与“广域网实时搜索 (Web Search)”之间进行精准路由与多步拆解。
+* **双擎驱动**: 支持按需切换云端模型（如 Gemini 2.5 Flash）与本地开源模型（如 Qwen 3）。
 
-### 1. 基础环境
-建议使用 Python 3.10+ 环境。克隆项目后安装依赖：
+### 2. 海马体：自适应混合检索引擎 (Hybrid RAG + LinUCB)
+* **稠密与稀疏双路召回**: 底层集成 Chroma 向量库与 BM25 词频检索，兼顾语义泛化与关键词精准度。
+* **LinUCB 动态权重分配 (自适应 Alpha)**: 区别于传统的固定权重，系统手写实现了 Contextual Bandit (上下文多臂老虎机) 算法。根据 Query 的长度、特殊字符密度等特征，**在线动态调节**双路召回的 Alpha 权重，实现检索策略的自我进化。
 
-```bash
+### 3. 高阶检索算法组 (Advanced Algorithms)
+* **最大边际相关性重排 (MMR)**: 引入自定义的 MMR 算法对初次召回文档进行多样性重排，有效降低上下文冗余度。
+* **伪相关反馈 (PRF)**: 结合 `Scikit-learn` 的 TF-IDF 算法，自动提取初次召回文档的核心特征词，实现查询发散与扩展 (Query Expansion)，大幅提升长尾问题的召回率。
+
+### 4. 边缘系统与韦尼克区：NLP 感知流水线 (Perception)
+* **情感前处理 (Sentiment Analysis)**: 集成轻量级 RoBERTa 模型，捕捉用户输入的潜在情绪（如焦虑/积极），并动态注入到大模型的 System Prompt 中，实现“带温度”的生成。
+* **实体识别后处理 (NER)**: 提取大模型生成结果中的关键实体（人名、地名、机构等），在前端 UI 进行可视化增强。
+
+### 5. 可视化交互控制台 (Streamlit UI)
+* 提供完整的参数中控台，支持实时调节 Top-K、Temperature 以及各个算法模块的开关。
+* **语义空间降维可视化**: 引入 PCA 算法，实时抓取 ChromaDB 中的高维 Embedding 向量，映射为 2D 散点图，直观展示知识库的数据分布。
+
+---
+
+## 📁 模块化项目结构
+
+```text
+├── app.py                  # Streamlit 可视化前端与应用入口
+├── core/
+│   └── config.py           # 全局配置与环境变量管理 (Embed模型、代理设置等)
+├── agent/
+│   ├── graph_brain.py      # LangGraph 状态机定义与节点编排
+│   └── tools.py            # 工具层封装，串联底层 RAG 与算法模块
+├── memory/
+│   └── rag_engine.py       # 混合索引构建、Chroma/BM25 初始化及 PCA 降维
+├── algorithms/
+│   ├── linucb.py           # LinUCB 上下文 Bandit 算法引擎
+│   ├── mmr.py              # 最大边际相关性重排算法
+│   └── prf.py              # 伪相关反馈查询扩展算法
+└── perception/
+    └── nlp_pipeline.py     # 基于 HuggingFace Pipeline 的情感与 NER 模块
+🚀 快速启动指南
+1. 基础环境
+推荐使用 Python 3.10+，克隆代码并安装依赖：
+
+Bash
+git clone [https://github.com/您的用户名/RAG-Agent.git](https://github.com/您的用户名/RAG-Agent.git)
+cd RAG-Agent
 pip install -r requirements.txt
-```
+2. 环境配置
+在项目根目录创建 .env 文件，配置必要的大模型 API 密钥（切勿将此文件提交至 Git）：
 
-主要依赖包括：`langchain`、`streamlit`、`chromadb`、`scikit-learn`、`transformers`、`duckduckgo-search` 等，详见 `requirements.txt`。
-
-### 2. ⚠️ 网络代理配置 (访问 Gemini 必读)
-如果您选择使用 Google Gemini 作为云端大模型，在国内或特定网络环境下，必须配置本地代理 (VPN) 才能正常访问 API。
-请打开 `backend.py`，在文件顶部找到以下代码，并将端口号修改为您本地代理软件的实际端口（例如 Clash 常用的 7890 或 V2ray 的 10808 等）：
-
-```python
-PROXY_URL = "http://127.0.0.1:您的代理端口"
-os.environ["http_proxy"] = PROXY_URL
-os.environ["https_proxy"] = PROXY_URL
-```
-
-### 3. API 密钥配置
-在项目根目录创建一个 `.env` 文件，写入您的 Google Gemini API 密钥：
-
-```env
+代码段
 GOOGLE_API_KEY=your_api_key_here
-```
+(注：如需在国内网络环境使用 API，请在 core/config.py 中确认代理端口配置。)
 
-### 4. 本地大模型配置 (可选 / 推荐)
-系统完全支持本地化离线运行，彻底解决 API 限流与网络问题。如果您拥有 8GB 以上显存的设备，推荐安装 Ollama 并拉取模型：
-
-```bash
-ollama run qwen3  # 推荐使用最新的 Qwen 3 系列
-```
-
-## 🖥️ 运行与使用指南
-
-启动 Streamlit 服务：
-
-```bash
+3. 运行系统
+Bash
 streamlit run app.py
-```
-
-### 功能面板说明
-- **知识库构建 (文件上传)**：通过左侧边栏上传 PDF 或 TXT 文件。系统会自动执行文本切分 (Chunking) 并构建本地 Chroma 向量库。
-- **Agent 模式开关**：
-  - 开启：激活多步推理能力，模型将根据您的问题，自主决定是否调用网络搜索，并在聊天界面打印完整的推理链 (Chain of Thought)。
-  - 关闭：回退至极速的单步混合 RAG 问答模式。
-- **算法参数微调**：支持在 UI 界面实时开启/关闭 LinUCB 自适应学习、PRF 伪相关反馈、MMR 重排序，并可手动调节 Top-K 召回数量及模型生成温度 (Temperature)。
-
-## 📁 项目结构简述
-- `app.py`：Streamlit 前端交互层，负责 UI 渲染与状态管理。
-- `backend.py`：核心算法引擎层，包含 RAG 构建流水线、机器学习算法实现 (LinUCB/MMR)、NLP 模型加载及 Agent 工具组装逻辑。
+打开浏览器访问 http://localhost:8501，在左侧边栏上传 PDF 或 TXT 文档以“注入记忆”，即可开启全栈认知交互！
